@@ -114,7 +114,7 @@ def render_occupied(occupied):
     board = empty_board(".")
     for x, y in occupied:
         if 0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE:
-            board[y][x] = "◻"
+            board[y][x] = "O"
     return render_board(board)
 
 def board_to_string(board):
@@ -159,7 +159,7 @@ def build_board(ships, show_ships=False):
             coord_to_ship[coord] = idx
             if show_ships:
                 x, y = coord
-                grid[y][x] = "◻"
+                grid[y][x] = "O"
     return {
         "ships": ship_sets,
         "coord_to_ship": coord_to_ship,
@@ -210,11 +210,11 @@ def prompt_player_move(bot_board):
     while True:
         inp = input("Enter target as 'yx' ([A-J][1-10]): ").strip()
         
-        if inp[0] not in 'ABCDEFGHIJ' or not inp[1:].isdigit():
+        if inp[0].upper() not in 'ABCDEFGHIJ' or not inp[1:].isdigit():
             print("Invalid format, try again")
             continue
             
-        x, y = int(inp[1:]) - 1, ord(inp[0]) - ord('A')
+        x, y = int(inp[1:]) - 1, ord(inp[0].upper()) - ord('A')
         if not (0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE):
             print("Coordinates out of bounds, try again")
             continue
@@ -227,7 +227,14 @@ def format_coord(coord):
     if coord is None:
         return ""
     x, y = coord
+    return f"{x},{y}"
+
+def format_coord_to_print(coord):
+    if coord is None:
+        return ""
+    x, y = coord
     return f"{chr(y + ord('A'))}{x + 1}"
+
 
 def record_state(
     path,
