@@ -286,6 +286,15 @@ def apply_shot(board, coord):
 def all_sunk(board):
     return all(board["sunk"])
 
+def available_targets(board):
+    coords = []
+    for x in range(BOARD_SIZE):
+        for y in range(BOARD_SIZE):
+            if (x, y) not in board["shots"]:
+                coords.append((x, y))
+    return coords
+
+
 
 
 
