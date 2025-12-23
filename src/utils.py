@@ -17,6 +17,10 @@ SHIP_SIZES = {
 
 SHIP_LAYOUT = [size for size in (4, 3, 2, 1) for _ in range(SHIP_SIZES[size])]
 
+PLAYER_COLOR = "\033[92m"
+BOT_COLOR = "\033[94m"
+DEFAULT_COLOR = "\033[0m"
+
 def parse_input(inp: str):
     parts = inp.split()
     coordinate, size, orientation = parts
@@ -113,6 +117,9 @@ def render_occupied(occupied):
             board[y][x] = "◻"
     return render_board(board)
 
+def board_to_string(board):
+    return "".join("".join(row) for row in board)
+
 def data_path(filename):
     base = Path(__file__).resolve().parents[1]
     return base / "data" / filename
@@ -125,3 +132,161 @@ def save_ships(ships, path):
             size = len(coords)
             coords_str = " ".join(f"({x};{y})" for x, y in coords)
             writer.writerow([size, coords_str])
+
+def load_ships(path):
+    ships = []
+    with open(path, newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            raw = row["coords"]
+            coords = []
+            for pair in raw.split():
+                cleaned = pair.strip("()")
+                if not cleaned:
+                    continue
+                x_str, y_str = cleaned.split(";")
+                coords.append((int(x_str), int(y_str)))
+            ships.append(coords)
+    return ships
+
+
+def build_board(ships, show_ships=False):
+    grid = empty_board(".")
+    ship_sets = [set(ship) for ship in ships]
+    coord_to_ship = {}
+    for idx, ship in enumerate(ship_sets):
+        for coord in ship:
+            coord_to_ship[coord] = idx
+            if show_ships:
+                x, y = coord
+                grid[y][x] = "◻"
+    return {
+        "ships": ship_sets,
+        "coord_to_ship": coord_to_ship,
+        "hits": [set() for _ in ships],
+        "sunk": [False for _ in ships],
+        "grid": grid,
+        "shots": set(),
+    }
+
+def reset_game_state(path):
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            [
+                "turn",
+                "player_move",
+                "player_result",
+                "bot_move",
+                "bot_result",
+                "player_board",
+                "bot_board",
+            ]
+        )
+
+def board_snapshot(board):
+    return board_to_string(board["grid"])
+
+def board_display(board):
+    return render_board(board["grid"])
+
+def print_boards(player_board, bot_board):
+    print_player_board(player_board)
+    print()
+    print_bot_board(bot_board)
+
+
+def print_player_board(player_board):
+    print(PLAYER_COLOR + "Your board:" + DEFAULT_COLOR)
+    print(PLAYER_COLOR + board_display(player_board) + DEFAULT_COLOR)
+
+
+def print_bot_board(bot_board):
+    print(BOT_COLOR + "Bot board:" + DEFAULT_COLOR)
+    print(BOT_COLOR + board_display(bot_board) + DEFAULT_COLOR)
+
+
+def prompt_player_move(bot_board):
+    while True:
+        inp = input("Enter target as 'yx' ([A-J][1-10]): ").strip()
+        
+        if inp[0] not in 'ABCDEFGHIJ' or not inp[1:].isdigit():
+            print("Invalid format, try again")
+            continue
+            
+        x, y = int(inp[1:]) - 1, ord(inp[0]) - ord('A')
+        if not (0 <= x < BOARD_SIZE and 0 <= y < BOARD_SIZE):
+            print("Coordinates out of bounds, try again")
+            continue
+        if (x, y) in bot_board["shots"]:
+            print("You already tried that cell, pick another")
+            continue
+        return (x, y)
+    
+def format_coord(coord):
+    if coord is None:
+        return ""
+    x, y = coord
+    return f"{chr(y + ord('A'))}{x + 1}"
+
+def record_state(
+    path,
+    turn,
+    player_move,
+    player_result,
+    bot_move,
+    bot_result,
+    player_board,
+    bot_board,
+):
+    with open(path, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            [
+                turn,
+                format_coord(player_move),
+                player_result,
+                format_coord(bot_move),
+                bot_result,
+                board_snapshot(player_board),
+                board_snapshot(bot_board),
+            ]
+        )
+
+def add_surrounding_misses(board, ship_cells):
+    for cx, cy in ship_cells:
+        for nx in range(cx - 1, cx + 2):
+            for ny in range(cy - 1, cy + 2):
+                if 0 <= nx < BOARD_SIZE and 0 <= ny < BOARD_SIZE:
+                    if board["grid"][ny][nx] in ("H", "X"):
+                        continue
+                    board["grid"][ny][nx] = "M"
+                    board["shots"].add((nx, ny))
+
+def apply_shot(board, coord):
+    if coord in board["shots"]:
+        return "repeat"
+    board["shots"].add(coord)
+    x, y = coord
+    if coord in board["coord_to_ship"]:
+        ship_idx = board["coord_to_ship"][coord]
+        board["hits"][ship_idx].add(coord)
+        if len(board["hits"][ship_idx]) == len(board["ships"][ship_idx]):
+            board["sunk"][ship_idx] = True
+            for cx, cy in board["ships"][ship_idx]:
+                board["grid"][cy][cx] = "X"
+                board["shots"].add((cx, cy))
+            add_surrounding_misses(board, board["ships"][ship_idx])
+            return "sunk"
+        board["grid"][y][x] = "H"
+        return "hit"
+    board["grid"][y][x] = "M"
+    return "miss"
+
+def all_sunk(board):
+    return all(board["sunk"])
+
+
+
+
+

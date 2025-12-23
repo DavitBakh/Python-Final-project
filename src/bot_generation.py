@@ -1,6 +1,6 @@
 import random
-from utils import BOARD_SIZE, SHIP_LAYOUT, data_path, save_ships
-from utils import get_ship_coords, is_valid_ship
+from src.utils import BOARD_SIZE, SHIP_LAYOUT, data_path, save_ships
+from src.utils import get_ship_coords, is_valid_ship
 
 DIRECTIONS = ['u', 'd', 'l', 'r']
 

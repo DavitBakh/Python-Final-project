@@ -1,6 +1,6 @@
-from utils import SHIP_SIZES, BOARD_SIZE
-from utils import validate_input, parse_input, is_valid_ship, get_ship_coords, render_occupied
-from utils import save_ships, data_path
+from src.utils import SHIP_SIZES, BOARD_SIZE
+from src.utils import validate_input, parse_input, is_valid_ship, get_ship_coords, render_occupied
+from src.utils import save_ships, data_path
 
 def get_input():
     isValid = False
