@@ -6,6 +6,7 @@ from src.utils import BOARD_SIZE, board_to_string, data_path, empty_board
 from src.utils import load_ships, render_board, build_board, reset_game_state
 from src.utils import print_boards, prompt_player_move, apply_shot, all_sunk
 from src.utils import format_coord, record_state, print_bot_board, print_player_board
+from src.bot_ai import BotAI
 
 
 
@@ -47,16 +48,18 @@ def play():
             continue
 
         while True:
-            #TODO: Implement bot logic
-            
+            bot_move = BotAI.choose_move(player_board)
+            bot_result = apply_shot(player_board, bot_move)
+            BotAI.record_result(bot_move, bot_result)
+
             print_player_board(player_board)
             record_state(
                 game_state_path,
                 turn,
                 None,
                 "",
-                None, #TODO bot move
-                None, #TODO bot result
+                bot_move,
+                bot_result,
                 player_board,
                 bot_board,
             )
@@ -65,6 +68,8 @@ def play():
                 print("Bot wins! Your fleet is sunk.")
                 return
             
+            if bot_result not in ("hit", "sunk"):
+                break
             time.sleep(1)
 
 if __name__ == "__main__":
