@@ -1,5 +1,7 @@
 import csv
 from pathlib import Path
+from colorama import init, Fore, Style
+init()
 
 BOARD_SIZE = 10
 
@@ -17,9 +19,9 @@ SHIP_SIZES = {
 
 SHIP_LAYOUT = [size for size in (4, 3, 2, 1) for _ in range(SHIP_SIZES[size])]
 
-PLAYER_COLOR = "\033[92m"
-BOT_COLOR = "\033[94m"
-DEFAULT_COLOR = "\033[0m"
+PLAYER_COLOR = Fore.GREEN
+BOT_COLOR = Fore.BLUE
+DEFAULT_COLOR = Style.RESET_ALL
 
 def parse_input(inp: str):
     parts = inp.split()
