@@ -76,8 +76,6 @@ def main(is_random=False):
     else:
         ships = collect_player_ships()
     save_ships(ships, data_path("player_ships.csv"))
-    print("your ships")
-    print(ships)
 
 if __name__ == "__main__":
     main()

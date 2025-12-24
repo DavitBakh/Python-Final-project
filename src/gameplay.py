@@ -1,5 +1,3 @@
-import csv
-import random
 import time
 
 from src.utils import BOARD_SIZE, format_coord_to_print, data_path
